@@ -1,30 +1,29 @@
-import { MongoClient, ServerApiVersion } from "mongodb";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
-dotenv.config();
 
+dotenv.config();
 
 const URI = process.env.ATLAS_URI || "";
 
-const client = new MongoClient(URI, {
-  serverApi: { 
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-    ssl : true,
-    tlsAllowInvalidCertificates: true
-  },
-});
+async function connectDB() {
+  try {
+    // Koneksi ke MongoDB menggunakan Mongoose
+    await mongoose.connect(URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // Timeout koneksi
+      ssl: true,
+      tlsAllowInvalidCertificates: true, // Sama seperti di MongoClient
+    });
 
-try {
-  // Connect the client to the server
-  await client.connect();
-  // Send a ping to confirm a successful connection
-  await client.db("admin").command({ ping: 1 });
-  console.log("Pinged your deployment. You successfully connected to MongoDB!");
-} catch (err) {
-  console.error(err);
+    console.log("Successfully connected to MongoDB using Mongoose!");
+  } catch (err) {
+    console.error("Failed to connect to MongoDB", err);
+    process.exit(1); // Keluar jika koneksi gagal
+  }
 }
- 
-let db = client.db("employees");
 
-export default db;
+connectDB();
+
+// Ekspor Mongoose instance untuk digunakan di file lain
+export default mongoose;

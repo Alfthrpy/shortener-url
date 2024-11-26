@@ -1,76 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>URL Shortener</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- AOS (Animate On Scroll) Library -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* Kustomisasi ukuran alert */
+        .swal2-popup {
+            width: 0% !important;
+            /* Atur lebar relatif untuk mobile */
+            max-width: 400px;
+            /* Batas maksimum */
+        }
+
+        @media (min-width: 768px) {
+            .swal2-popup {
+                width: 30% !important;
+                /* Lebar untuk desktop */
+            }
+        }
+    </style>
+
+
 </head>
+
 <body class="bg-gradient-to-br from-blue-100 to-blue-200 min-h-screen flex items-center justify-center">
     <div class="container mx-auto px-4 max-w-md w-full">
-        <div 
-            data-aos="zoom-in" 
-            data-aos-duration="1000"
-            class="bg-white shadow-2xl rounded-xl p-8 text-center transform transition duration-500 hover:scale-105"
-        >
+        <div data-aos="zoom-in" data-aos-duration="1000"
+            class="bg-white shadow-2xl rounded-xl p-8 text-center transform transition duration-500 hover:scale-105">
             <h1 class="text-4xl font-bold mb-6 text-blue-600 tracking-tight" data-aos="fade-down">
                 Shorten Your Link
             </h1>
 
             <form id="link-form" class="space-y-4">
                 <div class="relative" data-aos="fade-up" data-aos-delay="200">
-                    <label 
-                        for="linkInput" 
-                        class="block text-left text-sm font-medium text-gray-700 mb-2"
-                    >
+                    <label for="linkInput" class="block text-left text-sm font-medium text-gray-700 mb-2">
                         Input Link
                     </label>
-                    <input 
-                        type="text" 
-                        id="linkInput" 
-                        placeholder="Paste your long URL here" 
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                    >
+                    <input type="text" id="linkInput" placeholder="Paste your long URL here" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
                 </div>
 
-                <button 
-                    type="submit" 
+                <button type="submit"
                     class="w-full bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg"
-                    data-aos="fade-up" 
-                    data-aos-delay="400"
-                >
+                    data-aos="fade-up" data-aos-delay="400">
                     Shorten
                 </button>
             </form>
 
-            <div 
-                id="result-container" 
-                class="mt-6 hidden" 
-                data-aos="fade-up" 
-                data-aos-delay="600"
-            >
+            <div id="result-container" class="mt-6 hidden" data-aos="fade-up" data-aos-delay="600">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">
                     Your Shortened Link
                 </h3>
                 <div class="flex items-center bg-blue-50 rounded-md p-3 space-x-2">
-                    <a 
-                        id="resultDiv" 
-                        href="" 
-                        target="_blank"
-                        class="text-blue-600 hover:underline truncate flex-grow"
-                    >
+                    <a id="resultDiv" href="" target="_blank" class="text-blue-600 hover:underline truncate flex-grow">
                         Shortened Link
                     </a>
-                    <button 
-                        id="copyButton"
-                        class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition duration-300"
-                    >
+                    <button id="copyButton"
+                        class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition duration-300">
                         Copy
                     </button>
                 </div>
@@ -94,22 +91,43 @@
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ link: linkInput.value }),
+                    body: JSON.stringify({ originalUrl: linkInput.value }),
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    resultDiv.href = result.hasil;
-                    resultDiv.textContent = result.hasil;
+                    resultDiv.href = result.shortUrl;
+                    resultDiv.textContent = result.shortUrl;
                     resultContainer.classList.remove("hidden");
+
+                    // Success alert
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Link shortened successfully!',
+                        text: 'Your shortened link is ready below.',
+                        showConfirmButton: false,
+                        timer: 2000,
+                    });
                 } else {
-                    alert("Failed to shorten the link.");
+                    // Error alert for invalid input
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to shorten the link',
+                        text: 'Please provide a valid URL.',
+                    });
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("An error occurred. Please try again.");
+
+                // Error alert for unexpected issues
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: 'An unexpected error occurred. Please try again later.',
+                });
             }
         });
+
 
         // Copy to clipboard functionality
         copyButton.addEventListener("click", () => {
@@ -117,7 +135,7 @@
                 copyButton.textContent = "Copied!";
                 copyButton.classList.remove("bg-blue-500");
                 copyButton.classList.add("bg-green-500");
-                
+
                 setTimeout(() => {
                     copyButton.textContent = "Copy";
                     copyButton.classList.remove("bg-green-500");
@@ -135,4 +153,5 @@
         });
     </script>
 </body>
+
 </html>

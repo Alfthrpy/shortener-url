@@ -2,54 +2,89 @@ import express from 'express';
 import db from "./db/connection.js";
 import shortid from "shortid";
 import dotenv from "dotenv";
+import Url from './models/Url.js';
 dotenv.config();
 
 const router = express.Router();
 
-router.get('/:token', async (req, res) => {
-    try {
-        // Find link in database based on the token
-        const link = await db.collection('shortener').findOne({ shorten: req.params.token });
+const urlPattern = new RegExp(
+    "^(https?:\\/\\/)?" + // Protokol (http:// atau https://) opsional
+    "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|localhost|" + // Domain (contoh.com) atau localhost
+    "((\\d{1,3}\\.){3}\\d{1,3}))" + // Alamat IP (192.168.0.1)
+    "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // Port opsional dan path
+    "(\\?[;&a-z\\d%_.~+=-]*)?" + // Query string opsional
+    "(\\#[-a-z\\d_]*)?$", // Fragment opsional
+    "i"
+  );
+  
 
-        // If link is found, redirect to the original URL
-        if (link) {
-            // Ensure the URL has a protocol
-            const redirectUrl = link.link.startsWith('http') ? link.link : `https://${link.link}`;
-            return res.redirect(redirectUrl);
-        } else {
-            return res.status(404).json({ error: 'Shortened link not found' });
-        }
+
+  router.get('/:token', async (req, res) => {
+    try {
+      const shortUrl = req.params.token;
+  
+      const url = await Url.findOne({ shortUrl });
+  
+      if (!url) {
+        return res.status(404).json({ error: 'URL not found' });
+      }
+  
+      // Increment click count
+      url.clicks++;
+      await url.save();
+  
+      // Redirect langsung ke original URL
+      res.redirect(301, url.originalUrl); // 301 untuk redirect permanen
     } catch (error) {
-        console.error('Error fetching link:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+      console.error(error);
+      res.status(500).json({ error: 'Server error' });
     }
-});
+  });
+  
 
 
 // Pastikan POST handler adalah async
 router.post('/', async (req, res) => {
-    const { link } = req.body;
-
-    if (!link) {
-        return res.status(400).json({ error: 'Link is required' });
-    }
-
-    const newDocument = { link, shorten: shortid.generate() };
-
     try {
-        // Insert document ke database
-        const response = await db.collection('shortener').insertOne(newDocument);
+        let { originalUrl } = req.body;
 
-        // Pastikan respons berhasil
-        if (response.acknowledged) {
-            return res.json({ hasil: `${process.env.URL}/shortener/${newDocument.shorten}` });
-        } else {
-            return res.status(500).json({ error: 'Failed to shorten the link' });
+        if (!/^https?:\/\//i.test(originalUrl)) {
+            originalUrl = `http://${originalUrl}`;
+          }
+        // Validate URL
+        if (!urlPattern.test(originalUrl)) {
+          return res.status(400).json({ error: 'Invalid URL' });
         }
-    } catch (error) {
-        console.error('Error while inserting to DB:', error);
-        return res.status(500).json({ error: 'Internal server error' });
-    }
+    
+        // Check if URL already exists
+        let url = await Url.findOne({ originalUrl });
+        
+        if (url) {
+          return res.json({ 
+            originalUrl: url.originalUrl, 
+            shortUrl: `http://localhost:${process.env.PORT || 3000}/shortener/${url.shortUrl}` 
+          });
+        }
+    
+        // Create new short URL
+        const shortUrl = shortid.generate();
+        
+        url = new Url({
+          originalUrl,
+          shortUrl
+        });
+    
+        await url.save();
+    
+        res.status(201).json({ 
+          originalUrl: url.originalUrl, 
+          shortUrl: `http://localhost:${process.env.PORT || 3000}/shortener/${shortUrl}` 
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server error' });
+      }
 });
 
 export default router;
+  
