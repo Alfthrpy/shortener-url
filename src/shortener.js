@@ -79,7 +79,7 @@ router.post('/', async (req, res) => {
     
         res.status(201).json({ 
           originalUrl: url.originalUrl, 
-          shortUrl: `http://localhost:${process.env.PORT || 3000}/shortener/${shortUrl}` 
+          shortUrl: `${process.env.URL}/shortener/${shortUrl}` 
         });
       } catch (error) {
         console.error(error);
