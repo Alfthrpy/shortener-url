@@ -7,7 +7,7 @@ import path from 'path';
 dotenv.config();
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3000;
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 // Menentukan path absolut untuk folder public

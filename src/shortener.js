@@ -24,6 +24,7 @@ const urlPattern = new RegExp(
       const shortUrl = req.params.token;
   
       const url = await Url.findOne({ shortUrl });
+      console.log(url);
   
       if (!url) {
         return res.status(404).json({ error: 'URL not found' });
@@ -62,7 +63,7 @@ router.post('/', async (req, res) => {
         if (url) {
           return res.json({ 
             originalUrl: url.originalUrl, 
-            shortUrl: `http://localhost:${process.env.PORT || 3000}/shortener/${url.shortUrl}` 
+            shortUrl: `${process.env.URL}/shortener/${url.shortUrl}` 
           });
         }
     
