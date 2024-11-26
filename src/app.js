@@ -1,33 +1,41 @@
 import express from 'express';
-import url from 'url'
-import shortener from '../src/shortener.js'
+import url from 'url';
+import shortener from '../src/shortener.js';
 import dotenv from "dotenv";
+import path from 'path';
+
 dotenv.config();
 
-
 const app = express();
-const port = 3001
-const __dirname = url.fileURLToPath(new URL('.',import.meta.url))
-app.use(express.json())
-app.use('/shortener',shortener)
+const port = 3001;
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+
+// Menentukan path absolut untuk folder public
+const publicDirectory = path.join(__dirname, 'public');
+
+app.use(express.json());
+app.use('/shortener', shortener);
+
+// Menggunakan path absolut untuk file statis
 app.get('/', (req, res) => {
-    return res.sendFile('./public/index.html',{root:__dirname});
-})
+    console.log(publicDirectory)
+    return res.sendFile('index.html', { root: publicDirectory });
+});
 
 app.get('/start', (req, res) => {
-    return res.sendFile('./public/start.html',{root:__dirname});
-})
+    return res.sendFile('start.html', { root: publicDirectory });
+});
 
 app.get('/about', (req, res) => {
-    return res.sendFile('./public/about.html',{root:__dirname});
-})
+    return res.sendFile('about.html', { root: publicDirectory });
+});
 
 app.use('*', (req, res) => {
-    return res.sendFile('./public/not-found.html',{root:__dirname});
-})
+    return res.sendFile('not-found.html', { root: publicDirectory });
+});
 
-app.listen(port,()=>{
-    console.log('listening on port '+port); 
-})
+app.listen(port, () => {
+    console.log('listening on port ' + port);
+});
 
-export default app
+export default app;
