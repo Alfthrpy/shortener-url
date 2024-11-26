@@ -1,12 +1,12 @@
 import express from 'express';
 import url from 'url'
-import shortener from './shortener.js'
+import shortener from '../src/shortener.js'
 import dotenv from "dotenv";
 dotenv.config();
 
 
 const app = express();
-const port = 3000
+const port = 3001
 const __dirname = url.fileURLToPath(new URL('.',import.meta.url))
 app.use(express.json())
 app.use('/shortener',shortener)
@@ -30,3 +30,4 @@ app.listen(port,()=>{
     console.log('listening on port '+port); 
 })
 
+export default app

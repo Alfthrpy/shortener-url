@@ -92,3 +92,4 @@ tmp/
 # Security sensitive files
 *.pem
 *.key
+.vercel
